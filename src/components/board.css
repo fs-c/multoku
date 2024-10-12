@@ -1,43 +1,61 @@
 /* vertical lines */
 
 .board > *:nth-child(3n) {
-    @apply border-r border-r-gray-500;
+    @apply border-r-2 border-r-black/50;
 }
 
 .board > *:nth-child(9n + 1) {
-    @apply border-l border-l-gray-500;
+    @apply border-l-2 border-l-black/50;
 }
 
 .board > *:not(:nth-child(9n)):not(:nth-child(3n)) {
-    @apply border-r border-r-gray-300;
+    @apply border-r border-r-black/20;
 }
 
 /* horizontal lines */
 
 .board > *:nth-child(n):nth-child(-n + 9) {
-    @apply border-t border-t-gray-500;
-    @apply border-b border-b-gray-300;
+    @apply border-t-2 border-t-black/50;
+    @apply border-b border-b-black/20;
 }
 
 .board > *:nth-child(n + 19):nth-child(-n + 27) {
-    @apply border-t border-t-gray-300;
-    @apply border-b border-b-gray-500;
+    @apply border-t border-t-black/20;
+    @apply border-b-2 border-b-black/50;
 }
 
 .board > *:nth-child(n + 28):nth-child(-n + 36) {
-    @apply border-b border-b-gray-300;
+    @apply border-b border-b-black/20;
 }
 
 .board > *:nth-child(n + 46):nth-child(-n + 54) {
-    @apply border-t border-t-gray-300;
-    @apply border-b border-b-gray-500;
+    @apply border-t border-t-black/20;
+    @apply border-b-2 border-b-black/50;
 }
 
 .board > *:nth-child(n + 64):nth-child(-n + 72) {
-    @apply border-t border-t-gray-300;
-    @apply border-b border-b-gray-300;
+    @apply border-t border-t-black/20;
+    @apply border-b border-b-black/20;
 }
 
 .board > *:nth-child(n + 73):nth-child(-n + 81) {
-    @apply border-b border-b-gray-500;
+    @apply border-b-2 border-b-gray-500;
+}
+
+/* rounding */
+
+.board > :first-child {
+    @apply rounded-tl-lg;
+}
+
+.board > :nth-child(9) {
+    @apply rounded-tr-lg;
+}
+
+.board > :nth-child(73) {
+    @apply rounded-bl-lg;
+}
+
+.board > :last-child {
+    @apply rounded-br-lg;
 }
