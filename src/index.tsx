@@ -5,6 +5,7 @@ import { Board } from './components/Board';
 import { render } from 'preact';
 import { generateBoard } from './data/generateBoard';
 import { board } from './store/board';
+import { Header } from './components/Header';
 
 export function App() {
     useEffect(() => {
@@ -12,8 +13,12 @@ export function App() {
     }, []);
 
     return (
-        <div className={'min-h-screen flex justify-center items-center'}>
+        <div className={'min-h-screen flex flex-col justify-between items-center'}>
+            <Header />
+
             <Board />
+
+            <div></div>
         </div>
     );
 }
