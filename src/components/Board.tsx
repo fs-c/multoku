@@ -1,17 +1,18 @@
-import { useComputed } from '@preact/signals';
+import './board.css';
+
 import { board } from '../store/board';
 
 export function Board() {
-    const boardGroups = useComputed(() => board.value.map((row, rowIndex) => );
-
     return (
-        <div className={'grid grid-cols-9'}>
-            {flatBoard.value.map((cell, cellIndex) => (
+        <div className={'grid grid-cols-9 board'}>
+            {board.value.map((cell, cellIndex) => (
                 <div
                     key={cellIndex}
-                    className={'w-8 h-8 flex justify-center items-center'}
+                    className={
+                        'w-16 h-16 flex justify-center items-center text-gray-400'
+                    }
                 >
-                    {cell}
+                    {cell ?? ''}
                 </div>
             ))}
         </div>
