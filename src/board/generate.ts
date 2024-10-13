@@ -7,6 +7,6 @@ export function generateBoard(difficulty: sudoku.Difficulty): Board {
             throw new Error(`sudoku generator generated invalid cell value ${value}`);
         }
 
-        return value == null ? { type: 'user', value, notes: [] } : { type: 'given', value };
+        return value == null ? { type: 'user', value, notes: new Set() } : { type: 'given', value };
     });
 }

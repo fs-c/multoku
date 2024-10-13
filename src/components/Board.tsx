@@ -1,14 +1,16 @@
 import './board.css';
 
 import { useRef } from 'preact/hooks';
-import { computed, useComputed, useSignal } from '@preact/signals';
+import { computed, signal, useComputed, useSignal } from '@preact/signals';
 import { useLargestFontSizeForChildSpan } from '../util/sizing';
 import { Cell } from './Cell';
-import { Controls, ControlsAction } from './Controls';
+import { Controls } from './Controls';
 import { generateBoard } from '../board/generate';
+import { CellAction, GlobalAction } from '../board/action';
+import { useBoard } from '../board/board';
 
 export function Board() {
-    const board = useSignal(generateBoard('easy'));
+    const { board, performBoardAction } = useBoard(generateBoard('medium'));
 
     const referenceCellContainerRef = useRef<HTMLDivElement>(null);
     const cellFontSize = useLargestFontSizeForChildSpan(referenceCellContainerRef, 8, 128);
@@ -21,6 +23,10 @@ export function Board() {
         return board.value.map((_, index) => computed(() => index === selectedCellIndex.value));
     });
 
+    const boardValueByIndexSignal = useComputed(() => {
+        return board.value.map((cell) => computed(() => cell));
+    });
+
     function onCellSelected(cellIndex: number) {
         if (selectedCellIndex.value === cellIndex) {
             selectedCellIndex.value = null;
@@ -29,38 +35,16 @@ export function Board() {
         }
     }
 
-    function onControlsAction(action: ControlsAction) {
-        switch (action.type) {
-            case 'undo':
-                break;
-            case 'value':
-                break;
-            case 'note':
-                if (selectedCellIndex.value == null) {
-                    console.warn('note action without selected cell');
-                    return;
-                }
+    function onAction(action: CellAction | GlobalAction) {
+        if (action.type === 'undo') {
+            performBoardAction(action);
+        } else {
+            if (selectedCellIndex.value === null) {
+                console.warn('no cell selected');
+                return;
+            }
 
-                const selectedCell = board.value[selectedCellIndex.value ?? 0];
-                if (selectedCell.type === 'given') {
-                    console.warn('note action on given cell');
-                    return;
-                }
-
-                const updatedCell = {
-                    ...selectedCell,
-                    notes: selectedCell.notes.includes(action.value)
-                        ? selectedCell.notes.filter((note) => note !== action.value)
-                        : [...selectedCell.notes, action.value],
-                };
-
-                const boardCopy = [...board.value];
-                boardCopy[selectedCellIndex.value] = updatedCell;
-                board.value = boardCopy;
-
-                break;
-            case 'clear':
-                break;
+            performBoardAction({ selectedCellIndex: selectedCellIndex.value, ...action });
         }
     }
 
@@ -69,20 +53,20 @@ export function Board() {
             <div className={'board grid grid-cols-9 select-none'}>
                 <div ref={referenceCellContainerRef}>
                     <Cell
-                        cell={board.value[0]}
+                        cell={boardValueByIndexSignal.value[0]}
                         fontSize={cellFontSize}
                         selected={cellIsSelectedByIndexSignal.value[0]}
                         onSelected={() => onCellSelected(0)}
                     />
                 </div>
 
-                {board.value.map((cell, cellIndex) =>
+                {boardValueByIndexSignal.value.map((signal, cellIndex) =>
                     cellIndex === 0 ? (
                         <></>
                     ) : (
                         <Cell
                             key={cellIndex}
-                            cell={cell}
+                            cell={signal}
                             fontSize={cellFontSize}
                             selected={cellIsSelectedByIndexSignal.value[cellIndex]}
                             onSelected={() => onCellSelected(cellIndex)}
@@ -91,7 +75,7 @@ export function Board() {
                 )}
             </div>
 
-            <Controls fontSize={cellFontSize} onAction={onControlsAction} />
+            <Controls fontSize={cellFontSize} onAction={onAction} />
         </div>
     );
 }

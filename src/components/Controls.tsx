@@ -9,19 +9,8 @@ import { ReadonlySignal, useSignal } from '@preact/signals';
 import { ComponentType } from 'preact';
 import { twMerge } from 'tailwind-merge';
 import { BaseCell, Cell } from './Cell';
-import { CellValue, possibleCellValues } from '../board/board';
-
-export type ControlsAction =
-    | {
-          type: 'undo';
-      }
-    | {
-          type: 'value' | 'note';
-          value: CellValue;
-      }
-    | {
-          type: 'clear';
-      };
+import { possibleCellValues } from '../board/board';
+import { CellAction, GlobalAction } from '../board/action';
 
 function MobileAction({
     Icon,
@@ -54,7 +43,7 @@ export function Controls({
     onAction,
 }: {
     fontSize: ReadonlySignal<number>;
-    onAction: (action: ControlsAction) => void;
+    onAction: (action: CellAction | GlobalAction) => void;
 }) {
     const mode = useSignal<'value' | 'note'>('value');
 

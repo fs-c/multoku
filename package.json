@@ -9,6 +9,8 @@
 	"dependencies": {
 		"@heroicons/react": "^2.1.5",
 		"@preact/signals": "^1.3.0",
+		"immer": "^10.1.1",
+		"peerjs": "^1.5.4",
 		"preact": "^10.20.0",
 		"sudoku-core": "^3.0.3",
 		"tailwind-merge": "^2.5.3",

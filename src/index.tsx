@@ -3,6 +3,7 @@ import './index.css';
 import { Board } from './components/Board';
 import { render } from 'preact';
 import { Header } from './components/Header';
+import { enableMapSet } from 'immer';
 
 export function App() {
     return (
@@ -13,6 +14,8 @@ export function App() {
         </div>
     );
 }
+
+enableMapSet();
 
 const container = document.getElementById('app');
 if (container == null) {

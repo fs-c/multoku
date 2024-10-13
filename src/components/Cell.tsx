@@ -1,4 +1,4 @@
-import { ReadonlySignal, Signal } from '@preact/signals';
+import { ReadonlySignal, Signal, useComputed } from '@preact/signals';
 import { ComponentChildren } from 'preact';
 import { twMerge } from 'tailwind-merge';
 import { possibleCellValues } from '../board/board';
@@ -33,12 +33,22 @@ export function Cell({
     selected,
     onSelected,
 }: {
-    cell: Cell;
+    cell: Signal<Cell>;
     fontSize: ReadonlySignal<number>;
     className?: string;
     selected: Signal<boolean>;
     onSelected?: () => void;
 }) {
+    const notes = useComputed(() => {
+        if (cell.value.type === 'user' && cell.value.value == null) {
+            return cell.value.notes;
+        }
+
+        return null;
+    });
+
+    console.log(notes.value);
+
     return (
         <BaseCell
             className={twMerge(
@@ -52,18 +62,17 @@ export function Cell({
                 className={'absolute left-1/2 -translate-x-1/2'}
                 style={{ fontSize: `${fontSize.value}px` }}
             >
-                {cell.value ?? ''}
+                {cell.value.value ?? ''}
             </span>
 
-            {cell.type === 'user' &&
-                cell.notes.length > 0 &&
+            {notes.value != null &&
                 possibleCellValues.map((noteValue) => (
                     <span
                         key={noteValue}
                         className={'text-black/50 text-center'}
                         style={{ fontSize: `${fontSize.value / 3}px` }}
                     >
-                        {cell.notes.includes(noteValue) ? noteValue : ''}
+                        {notes.value?.has(noteValue) ? noteValue : ''}
                     </span>
                 ))}
         </BaseCell>
