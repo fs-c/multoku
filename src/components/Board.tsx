@@ -1,129 +1,97 @@
 import './board.css';
 
-import { board } from '../store/board';
 import { useRef } from 'preact/hooks';
-import { ReadonlySignal, Signal, useSignal } from '@preact/signals';
+import { computed, useComputed, useSignal } from '@preact/signals';
 import { useLargestFontSizeForChildSpan } from '../util/sizing';
-import { ComponentChildren } from 'preact';
-import { XMarkIcon } from './icons/XMarkIcon';
-import { twMerge } from 'tailwind-merge';
-import { PencilIcon } from './icons/PencilIcon';
-import { BeakerIcon } from './icons/BeakerIcon';
-
-function BaseCell({ children, className }: { children: ComponentChildren; className?: string }) {
-    return (
-        <div
-            className={twMerge(
-                'aspect-square flex justify-center items-center text-gray-700 relative',
-                className,
-            )}
-        >
-            {children}
-        </div>
-    );
-}
-
-function Cell({
-    value,
-    fontSize,
-    className,
-}: {
-    value: number | null;
-    fontSize: ReadonlySignal<number>;
-    className?: string;
-}) {
-    return (
-        <BaseCell className={twMerge('bg-white/25', className)}>
-            <span
-                className={'absolute left-1/2 -translate-x-1/2'}
-                style={{ fontSize: `${fontSize.value}px` }}
-            >
-                {value ?? ''}
-            </span>
-        </BaseCell>
-    );
-}
-
-function Controls({
-    fontSize,
-    mode,
-}: {
-    fontSize: ReadonlySignal<number>;
-    mode: Signal<'edit' | 'note'>;
-}) {
-    const values = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-    return (
-        <>
-            <div className={'grid-cols-9 relative hidden md:grid'}>
-                <button
-                    className={
-                        'absolute left-0 h-full -translate-x-full border-2 border-r border-black/50 rounded-l-md border-r-black/20'
-                    }
-                    onClick={() => (mode.value = mode.value === 'note' ? 'edit' : 'note')}
-                >
-                    <BaseCell className={'h-full'}>
-                        {mode.value === 'note' ? (
-                            <PencilIcon className={'size-10'} />
-                        ) : (
-                            <BeakerIcon className={'size-10'} />
-                        )}
-                    </BaseCell>
-                </button>
-
-                {values.map((value) => (
-                    <button key={value} className={'border-t-2 border-b-2 border-black/50'}>
-                        <Cell
-                            value={value}
-                            fontSize={fontSize}
-                            /* there is some completely absurd issue where adding border-l/r to the parent button 
-                               changes the height (???) and adding it here is my workaround (╯°□°）╯︵ ┻━┻ */
-                            className={'border-r border-black/20'}
-                        />
-                    </button>
-                ))}
-
-                <button
-                    className={
-                        'absolute right-0 h-full translate-x-full border-t-2 border-b-2 border-r-2 border-black/50 rounded-r-md'
-                    }
-                >
-                    <BaseCell className={'h-full'}>
-                        <XMarkIcon className={'size-12'} />
-                    </BaseCell>
-                </button>
-            </div>
-
-            <div className={'flex flex-col md:hidden gap-1'}>
-                <div className={'grid grid-cols-9 text-orange-700'}>
-                    {values.map((value) => (
-                        <button style={{ fontSize: `${fontSize.value}px` }}>{value}</button>
-                    ))}
-                </div>
-            </div>
-        </>
-    );
-}
+import { Cell } from './Cell';
+import { Controls, ControlsAction } from './Controls';
+import { generateBoard } from '../board/generate';
 
 export function Board() {
+    const board = useSignal(generateBoard('easy'));
+
     const referenceCellContainerRef = useRef<HTMLDivElement>(null);
     const cellFontSize = useLargestFontSizeForChildSpan(referenceCellContainerRef, 8, 128);
 
-    const mode = useSignal<'edit' | 'note'>('edit');
+    const selectedCellIndex = useSignal<number | null>(null);
+
+    // this is an optimization, otherwise the entire board would re-render on every cell selection
+    // which would make selection have a noticeable delay
+    const cellIsSelectedByIndexSignal = useComputed(() => {
+        return board.value.map((_, index) => computed(() => index === selectedCellIndex.value));
+    });
+
+    function onCellSelected(cellIndex: number) {
+        if (selectedCellIndex.value === cellIndex) {
+            selectedCellIndex.value = null;
+        } else {
+            selectedCellIndex.value = cellIndex;
+        }
+    }
+
+    function onControlsAction(action: ControlsAction) {
+        switch (action.type) {
+            case 'undo':
+                break;
+            case 'value':
+                break;
+            case 'note':
+                if (selectedCellIndex.value == null) {
+                    console.warn('note action without selected cell');
+                    return;
+                }
+
+                const selectedCell = board.value[selectedCellIndex.value ?? 0];
+                if (selectedCell.type === 'given') {
+                    console.warn('note action on given cell');
+                    return;
+                }
+
+                const updatedCell = {
+                    ...selectedCell,
+                    notes: selectedCell.notes.includes(action.value)
+                        ? selectedCell.notes.filter((note) => note !== action.value)
+                        : [...selectedCell.notes, action.value],
+                };
+
+                const boardCopy = [...board.value];
+                boardCopy[selectedCellIndex.value] = updatedCell;
+                board.value = boardCopy;
+
+                break;
+            case 'clear':
+                break;
+        }
+    }
 
     return (
         <div className={'flex flex-col gap-8 w-full max-w-screen-md p-2 md:p-4'}>
-            <div className={'grid grid-cols-9 board'}>
+            <div className={'board grid grid-cols-9 select-none'}>
                 <div ref={referenceCellContainerRef}>
-                    <Cell value={board.value[0]} fontSize={cellFontSize} />
+                    <Cell
+                        cell={board.value[0]}
+                        fontSize={cellFontSize}
+                        selected={cellIsSelectedByIndexSignal.value[0]}
+                        onSelected={() => onCellSelected(0)}
+                    />
                 </div>
 
-                {board.value.slice(1).map((cell, cellIndex) => (
-                    <Cell key={cellIndex} value={cell} fontSize={cellFontSize} />
-                ))}
+                {board.value.map((cell, cellIndex) =>
+                    cellIndex === 0 ? (
+                        <></>
+                    ) : (
+                        <Cell
+                            key={cellIndex}
+                            cell={cell}
+                            fontSize={cellFontSize}
+                            selected={cellIsSelectedByIndexSignal.value[cellIndex]}
+                            onSelected={() => onCellSelected(cellIndex)}
+                        />
+                    ),
+                )}
             </div>
 
-            <Controls fontSize={cellFontSize} mode={mode} />
+            <Controls fontSize={cellFontSize} onAction={onControlsAction} />
         </div>
     );
 }
