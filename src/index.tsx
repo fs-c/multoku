@@ -13,12 +13,10 @@ export function App() {
     }, []);
 
     return (
-        <div className={'min-h-screen flex flex-col justify-between items-center'}>
+        <div className={'min-h-screen flex flex-col items-center'}>
             <Header />
 
             <Board />
-
-            <div></div>
         </div>
     );
 }

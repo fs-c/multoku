@@ -45,17 +45,17 @@
 /* rounding */
 
 .board > :first-child {
-    @apply rounded-tl-lg;
+    @apply rounded-tl-md md:rounded-tl-lg;
 }
 
 .board > :nth-child(9) {
-    @apply rounded-tr-lg;
+    @apply rounded-tr-md md:rounded-tr-lg;
 }
 
 .board > :nth-child(73) {
-    @apply rounded-bl-lg;
+    @apply rounded-bl-md md:rounded-bl-lg;
 }
 
 .board > :last-child {
-    @apply rounded-br-lg;
+    @apply rounded-br-md md:rounded-br-lg;
 }
