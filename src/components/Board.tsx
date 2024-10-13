@@ -1,7 +1,7 @@
 import './board.css';
 
-import { useRef } from 'preact/hooks';
-import { computed, signal, useComputed, useSignal } from '@preact/signals';
+import { useMemo, useRef } from 'preact/hooks';
+import { useSignal } from '@preact/signals';
 import { useLargestFontSizeForChildSpan } from '../util/sizing';
 import { Cell } from './Cell';
 import { Controls } from './Controls';
@@ -10,22 +10,13 @@ import { CellAction, GlobalAction } from '../board/action';
 import { useBoard } from '../board/board';
 
 export function Board() {
-    const { board, performBoardAction } = useBoard(generateBoard('medium'));
+    const initialBoard = useMemo(() => generateBoard('medium'), []);
+    const { board, performBoardAction } = useBoard(initialBoard);
 
     const referenceCellContainerRef = useRef<HTMLDivElement>(null);
     const cellFontSize = useLargestFontSizeForChildSpan(referenceCellContainerRef, 8, 128);
 
     const selectedCellIndex = useSignal<number | null>(null);
-
-    // this is an optimization, otherwise the entire board would re-render on every cell selection
-    // which would make selection have a noticeable delay
-    const cellIsSelectedByIndexSignal = useComputed(() => {
-        return board.value.map((_, index) => computed(() => index === selectedCellIndex.value));
-    });
-
-    const boardValueByIndexSignal = useComputed(() => {
-        return board.value.map((cell) => computed(() => cell));
-    });
 
     function onCellSelected(cellIndex: number) {
         if (selectedCellIndex.value === cellIndex) {
@@ -53,22 +44,22 @@ export function Board() {
             <div className={'board grid grid-cols-9 select-none'}>
                 <div ref={referenceCellContainerRef}>
                     <Cell
-                        cell={boardValueByIndexSignal.value[0]}
+                        cell={board.value[0]}
                         fontSize={cellFontSize}
-                        selected={cellIsSelectedByIndexSignal.value[0]}
+                        selected={selectedCellIndex.value === 0}
                         onSelected={() => onCellSelected(0)}
                     />
                 </div>
 
-                {boardValueByIndexSignal.value.map((signal, cellIndex) =>
+                {board.value.map((cell, cellIndex) =>
                     cellIndex === 0 ? (
                         <></>
                     ) : (
                         <Cell
                             key={cellIndex}
-                            cell={signal}
+                            cell={cell}
                             fontSize={cellFontSize}
-                            selected={cellIsSelectedByIndexSignal.value[cellIndex]}
+                            selected={selectedCellIndex.value === cellIndex}
                             onSelected={() => onCellSelected(cellIndex)}
                         />
                     ),

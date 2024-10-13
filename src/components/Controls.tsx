@@ -11,6 +11,7 @@ import { twMerge } from 'tailwind-merge';
 import { BaseCell, Cell } from './Cell';
 import { possibleCellValues } from '../board/board';
 import { CellAction, GlobalAction } from '../board/action';
+import { useMemo } from 'preact/hooks';
 
 function MobileAction({
     Icon,
@@ -47,7 +48,10 @@ export function Controls({
 }) {
     const mode = useSignal<'value' | 'note'>('value');
 
-    const dummySignalFalse = useSignal(false);
+    const dummyCells = useMemo(
+        () => possibleCellValues.map((value) => ({ type: 'given' as const, value })),
+        [possibleCellValues],
+    );
 
     // todo: desktop controls are super WIP/non-functional
     //  also i would like to have there be a Mobile/DesktopControls component since they are so different
@@ -70,15 +74,15 @@ export function Controls({
                     </BaseCell>
                 </button>
 
-                {possibleCellValues.map((value) => (
-                    <button key={value} className={'border-t-2 border-b-2 border-black/50'}>
+                {dummyCells.map((cell) => (
+                    <button key={cell.value} className={'border-t-2 border-b-2 border-black/50'}>
                         <Cell
-                            cell={{ type: 'given', value }}
+                            cell={cell}
                             fontSize={fontSize}
                             /* there is some completely absurd issue where adding border-l/r to the parent button 
                                changes the height (???) and adding it here is my workaround (╯°□°）╯︵ ┻━┻ */
                             className={'border-r border-black/20'}
-                            selected={dummySignalFalse}
+                            selected={false}
                         />
                     </button>
                 ))}
