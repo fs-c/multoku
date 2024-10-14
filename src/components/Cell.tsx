@@ -70,14 +70,14 @@ export function Cell({
             </span>
 
             {notes != null &&
-                notes.size > 0 &&
+                notes.length > 0 &&
                 possibleCellValues.map((noteValue) => (
                     <span
                         key={noteValue}
                         className={'text-black/50 text-center'}
                         style={{ fontSize: `${fontSize.value / 3}px` }}
                     >
-                        {notes.has(noteValue) ? noteValue : ''}
+                        {notes.includes(noteValue) ? noteValue : ''}
                     </span>
                 ))}
         </BaseCell>
