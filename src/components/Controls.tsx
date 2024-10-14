@@ -16,13 +16,13 @@ import { useMemo } from 'preact/hooks';
 function MobileAction({
     Icon,
     label,
-    className,
     onClick,
+    className,
 }: {
     Icon: ComponentType<any>; // todo: better type, don't want to think about it rn
     label: string;
-    className?: string;
     onClick: () => void;
+    className?: string;
 }) {
     return (
         <button

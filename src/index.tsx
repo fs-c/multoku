@@ -1,16 +1,16 @@
 import './index.css';
 
-import { Board } from './components/Board';
+import { Game } from './components/Game';
 import { render } from 'preact';
 import { Header } from './components/Header';
 import { enableMapSet } from 'immer';
 
 export function App() {
     return (
-        <div className={'min-h-screen flex flex-col items-center'}>
+        <div className={'min-h-screen h-full flex flex-col items-center'}>
             <Header />
 
-            <Board />
+            <Game />
         </div>
     );
 }

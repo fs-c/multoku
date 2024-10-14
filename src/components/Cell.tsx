@@ -39,38 +39,35 @@ export function Cell({
     selected: boolean;
     onSelected?: () => void;
 }) {
-    const notes = useComputed(() => {
-        if (cell.type === 'user' && cell.value == null) {
-            return cell.notes;
-        }
-
-        return null;
-    });
+    const notes = cell.type === 'given' || cell.value != null ? null : cell.notes;
 
     return (
         <BaseCell
             className={twMerge(
-                selected ? 'bg-black/10' : 'bg-white/25',
+                selected ? 'bg-black/5' : 'bg-white/25',
                 'grid grid-cols-3 grid-rows-3',
                 className,
             )}
             onClick={onSelected}
         >
             <span
-                className={'absolute left-1/2 -translate-x-1/2'}
+                className={twMerge(
+                    'absolute left-1/2 -translate-x-1/2',
+                    cell.type === 'user' && 'text-orange-700',
+                )}
                 style={{ fontSize: `${fontSize.value}px` }}
             >
                 {cell.value ?? ''}
             </span>
 
-            {notes.value != null &&
+            {notes != null &&
                 possibleCellValues.map((noteValue) => (
                     <span
                         key={noteValue}
                         className={'text-black/50 text-center'}
                         style={{ fontSize: `${fontSize.value / 3}px` }}
                     >
-                        {notes.value?.has(noteValue) ? noteValue : ''}
+                        {notes.has(noteValue) ? noteValue : ''}
                     </span>
                 ))}
         </BaseCell>
