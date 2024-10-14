@@ -1,8 +1,9 @@
-import { ReadonlySignal, useComputed } from '@preact/signals';
+import { ReadonlySignal } from '@preact/signals';
 import { ComponentChildren } from 'preact';
 import { twMerge } from 'tailwind-merge';
 import { possibleCellValues } from '../board/board';
-import type * as Board from '../board/board';
+import type { Cell } from '../board/board';
+import { isFilledUserCell } from '../board/board';
 
 export function BaseCell({
     children,
@@ -33,7 +34,7 @@ export function Cell({
     selected,
     onSelected,
 }: {
-    cell: Board.Cell;
+    cell: Cell;
     fontSize: ReadonlySignal<number>;
     className?: string;
     selected: boolean;
@@ -41,10 +42,18 @@ export function Cell({
 }) {
     const notes = cell.type === 'given' || cell.value != null ? null : cell.notes;
 
+    const hasError = isFilledUserCell(cell) && cell.error;
+
     return (
         <BaseCell
             className={twMerge(
-                selected ? 'bg-black/5' : 'bg-white/25',
+                selected
+                    ? hasError
+                        ? 'bg-red-500/30'
+                        : 'bg-black/5'
+                    : hasError
+                      ? 'bg-red-500/15'
+                      : 'bg-white/25',
                 'grid grid-cols-3 grid-rows-3',
                 className,
             )}
@@ -53,14 +62,15 @@ export function Cell({
             <span
                 className={twMerge(
                     'absolute left-1/2 -translate-x-1/2',
-                    cell.type === 'user' && 'text-orange-700',
+                    cell.type === 'user' && (hasError ? 'text-red-700' : 'text-orange-700'),
                 )}
                 style={{ fontSize: `${fontSize.value}px` }}
             >
-                {cell.value ?? ''}
+                {cell.value}
             </span>
 
             {notes != null &&
+                notes.size > 0 &&
                 possibleCellValues.map((noteValue) => (
                     <span
                         key={noteValue}

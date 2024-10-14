@@ -34,3 +34,7 @@ export function generateBoardAndSolution(difficulty: sudoku.Difficulty): Promise
         });
     });
 }
+
+export function createEmptyBoard(): Board {
+    return Array.from({ length: 81 }, () => ({ type: 'user', value: null, notes: new Set() }));
+}

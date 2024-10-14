@@ -4,7 +4,7 @@ import { useSignal } from '@preact/signals';
 import { Controls } from './Controls';
 import { CellAction, GlobalAction } from '../board/action';
 import { useBoard } from '../board/board';
-import { Square3Stack3DIcon } from '@heroicons/react/24/outline';
+import { FireIcon } from '@heroicons/react/24/outline';
 import { Board } from './Board';
 
 export const minCellFontSize = 8;
@@ -45,7 +45,7 @@ export function Game() {
         </div>
     ) : (
         <div className={'flex justify-center items-center flex-grow'}>
-            <Square3Stack3DIcon className={'size-12 text-orange-700 animate-bounce'} />
+            <FireIcon className={'size-12 text-orange-700 animate-bounce'} />
         </div>
     );
 }

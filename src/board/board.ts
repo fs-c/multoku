@@ -16,6 +16,14 @@ type GivenCell = { type: 'given'; value: CellValue };
 type FilledUserCell = { type: 'user'; value: CellValue; error: boolean };
 type EmptyUserCell = { type: 'user'; value: null; notes: Set<CellValue> };
 
+export function isFilledUserCell(cell: Cell): cell is FilledUserCell {
+    return cell.type === 'user' && cell.value != null;
+}
+
+export function isEmptyUserCell(cell: Cell): cell is EmptyUserCell {
+    return cell.type === 'user' && cell.value == null;
+}
+
 export type Cell = GivenCell | FilledUserCell | EmptyUserCell;
 
 export type Board = Cell[];
