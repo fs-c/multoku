@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { InitialBoardCreationOptions, useBoard } from './useBoard';
-import Peer, { DataConnection, LogLevel, PeerOptions } from 'peerjs';
+import Peer, { DataConnection, PeerOptions } from 'peerjs';
 import { Board } from './board';
 import { BoardAction } from './action';
 import { ReadonlySignal, useSignal } from '@preact/signals';
@@ -21,7 +21,7 @@ type ConnectionEvent =
       };
 
 const commonPeerOptions: PeerOptions = {
-    debug: LogLevel.All,
+    debug: 3,
     config: {
         iceServers: [
             { urls: 'stun:freestun.net:3478' },
