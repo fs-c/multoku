@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { InitialBoardCreationOptions, useBoard } from './useBoard';
-import Peer, { DataConnection } from 'peerjs';
+import Peer, { DataConnection, LogLevel, PeerOptions } from 'peerjs';
 import { Board } from './board';
 import { BoardAction } from './action';
 import { ReadonlySignal, useSignal } from '@preact/signals';
@@ -20,9 +20,19 @@ type ConnectionEvent =
           action: BoardAction;
       };
 
+const commonPeerOptions: PeerOptions = {
+    debug: LogLevel.All,
+    config: {
+        iceServers: [
+            { urls: 'stun:freestun.net:3478' },
+            { urls: 'turn:freestun.net:3478', username: 'free', credential: 'free' },
+        ],
+    },
+};
+
 const peerIdPrefix = 'space-fsoc-multoku-';
 
-function connectionTokenToPeerId(token: string): string {
+function connectionTokenToDistributorId(token: string): string {
     return peerIdPrefix + token;
 }
 
@@ -57,8 +67,8 @@ function setupPeerDebugLogs(peer: Peer, tag: string) {
 }
 
 function setupEventDistributor(token: string, board: ReadonlySignal<Board | null>) {
-    const distributorPeerId = connectionTokenToPeerId(token);
-    const distributor = new Peer(distributorPeerId);
+    const distributorPeerId = connectionTokenToDistributorId(token);
+    const distributor = new Peer(distributorPeerId, commonPeerOptions);
 
     setupPeerDebugLogs(distributor, '[distributor]');
 
@@ -105,12 +115,12 @@ function useConnectionToDistributor(
     const connectionToDistributor = useSignal<DataConnection | null>(null);
 
     useEffect(() => {
-        const peer = new Peer();
+        const peer = new Peer(commonPeerOptions);
 
         setupPeerDebugLogs(peer, '[client]');
 
         peer.on('open', () => {
-            connectionToDistributor.value = peer.connect(connectionTokenToPeerId(token));
+            connectionToDistributor.value = peer.connect(connectionTokenToDistributorId(token));
 
             connectionToDistributor.value.on('data', (data) => {
                 const event = JSON.parse(data as string) as ConnectionEvent;
