@@ -48,7 +48,7 @@ export function useBoard(initialBoardCreationOptions: InitialBoardCreationOption
                     newBoard[action.selectedCellIndex] = {
                         type: 'user',
                         value: null,
-                        notes: new Set(),
+                        notes: [],
                     };
                     break;
                 }

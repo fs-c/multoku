@@ -9,7 +9,7 @@ function mapRawBoardToBoard(rawBoard: sudoku.Board): Board {
             throw new Error(`sudoku generator generated invalid cell value ${value}`);
         }
 
-        return value == null ? { type: 'user', value, notes: new Set() } : { type: 'given', value };
+        return value == null ? { type: 'user', value, notes: [] } : { type: 'given', value };
     });
 }
 
@@ -36,5 +36,5 @@ export function generateBoardAndSolution(difficulty: sudoku.Difficulty): Promise
 }
 
 export function createEmptyBoard(): Board {
-    return Array.from({ length: 81 }, () => ({ type: 'user', value: null, notes: new Set() }));
+    return Array.from({ length: 81 }, () => ({ type: 'user', value: null, notes: [] }));
 }
