@@ -29,12 +29,10 @@ export function App() {
     );
 
     return (
-        <div className={'flex h-full min-h-screen flex-col items-center'}>
-            <Header />
+        <div className={'relative flex h-full min-h-screen flex-col items-center'}>
+            <Header token={token} />
 
             <Game board={board} performBoardAction={performBoardAction} />
-
-            <ConnectivityBar token={token} />
         </div>
     );
 }
