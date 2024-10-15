@@ -1,4 +1,4 @@
-import { useSignal } from '@preact/signals';
+import { Signal, useSignal } from '@preact/signals';
 import { RefObject } from 'preact';
 import { useMemo, useEffect } from 'preact/hooks';
 
@@ -39,10 +39,10 @@ export function useLargestFontSizeForChildSpan(
     elementRef: RefObject<HTMLElement>,
     minFontSizePx: number,
     maxFontSizePx: number,
-) {
+): Signal<number | null> {
     const { width, height } = useResizeObserver(elementRef);
 
-    const fontSize = useSignal<number>(minFontSizePx);
+    const fontSize = useSignal<number | null>(null);
 
     useEffect(() => {
         if (width.value === 0 || height.value === 0 || elementRef.current == null) {

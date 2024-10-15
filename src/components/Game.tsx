@@ -1,38 +1,40 @@
 import './board.css';
 
-import { useComputed, useSignal } from '@preact/signals';
+import { ReadonlySignal, useComputed, useSignal } from '@preact/signals';
 import { Controls } from './Controls';
-import { CellAction, GlobalAction } from '../board/action';
+import { BoardAction, CellAction, GlobalAction } from '../board/action';
 import { FireIcon } from '@heroicons/react/24/outline';
-import { Board } from './Board';
-import { useConnectedBoard } from '../board/useConnectedBoard';
-import { useMemo } from 'preact/hooks';
+import { useRef } from 'preact/hooks';
+import type { Board } from '../board/board';
+import { useLargestFontSizeForChildSpan } from '../util/sizing';
+import { Cell } from './Cell';
+import { createEmptyBoard } from '../board/generate';
+import { twMerge } from 'tailwind-merge';
 
 export const minCellFontSize = 8;
 export const maxCellFontSize = 128;
 
-export function Game() {
-    const initialToken = useMemo(
-        () =>
-            Math.floor(Math.random() * Math.pow(10, 5))
-                .toString()
-                .padStart(5, '0'),
-        [],
+const emptyBoard = createEmptyBoard();
+
+export function Game({
+    board: actualBoard,
+    performBoardAction,
+}: {
+    board: ReadonlySignal<Board | null>;
+    performBoardAction: (action: BoardAction) => void;
+}) {
+    const referenceCellContainerRef = useRef<HTMLDivElement>(null);
+    const cellFontSize = useLargestFontSizeForChildSpan(
+        referenceCellContainerRef,
+        minCellFontSize,
+        maxCellFontSize,
     );
 
-    const token = useSignal<string>(initialToken);
-    const connectionOptions = useComputed(() => ({
-        token: token.value,
-        shouldHost: token.value === initialToken,
-    }));
-
-    const { board, performBoardAction } = useConnectedBoard(
-        { difficulty: 'medium' },
-        connectionOptions.value,
-    );
-
-    const cellFontSize = useSignal<number>(minCellFontSize);
     const selectedCellIndex = useSignal<number | null>(null);
+
+    const board = useComputed(() => actualBoard.value ?? emptyBoard);
+
+    const isLoaded = useComputed(() => actualBoard.value != null && cellFontSize.value != null);
 
     function onAction(action: CellAction | GlobalAction) {
         if (action.type === 'undo') {
@@ -47,34 +49,57 @@ export function Game() {
         }
     }
 
-    function setCellFontSize(fontSize: number) {
-        cellFontSize.value = fontSize;
+    function onCellSelected(cellIndex: number) {
+        if (selectedCellIndex.value === cellIndex) {
+            selectedCellIndex.value = null;
+        } else {
+            selectedCellIndex.value = cellIndex;
+        }
     }
 
-    return board.value != null ? (
-        <div className={'flex flex-col gap-8 w-full max-w-screen-md p-2 md:p-4'}>
-            <Board
-                board={board.value}
-                selectedCellIndex={selectedCellIndex}
-                setCellFontSize={setCellFontSize}
-            />
+    return (
+        <div className={'relative flex-grow w-full'}>
+            <div
+                className={twMerge(
+                    'flex flex-col gap-8 w-full max-w-screen-md p-2 md:p-4 transition',
+                    isLoaded.value ? 'opacity-100' : 'opacity-0',
+                )}
+            >
+                <div className={'board grid grid-cols-9 select-none relative'}>
+                    <div ref={referenceCellContainerRef}>
+                        <Cell
+                            cell={board.value[0]}
+                            fontSize={cellFontSize.value ?? minCellFontSize}
+                            selected={selectedCellIndex.value === 0}
+                            onSelected={() => onCellSelected(0)}
+                        />
+                    </div>
 
-            <Controls fontSize={cellFontSize} onAction={onAction} />
+                    {board.value.map((cell, cellIndex) =>
+                        cellIndex === 0 ? (
+                            <></>
+                        ) : (
+                            <Cell
+                                key={cellIndex}
+                                cell={cell}
+                                fontSize={cellFontSize.value ?? minCellFontSize}
+                                selected={selectedCellIndex.value === cellIndex}
+                                onSelected={() => onCellSelected(cellIndex)}
+                            />
+                        ),
+                    )}
+                </div>
 
-            <form>
-                <input
-                    className={'bg-inherit'}
-                    type={'text'}
-                    value={token}
-                    onInput={(event) => {
-                        token.value = (event.target as HTMLInputElement).value;
-                    }}
-                />
-            </form>
-        </div>
-    ) : (
-        <div className={'flex justify-center items-center flex-grow'}>
-            <FireIcon className={'size-12 text-orange-700 animate-bounce'} />
+                <Controls fontSize={cellFontSize} onAction={onAction} />
+            </div>
+            <div
+                className={twMerge(
+                    'flex justify-center items-center flex-grow absolute left-1/2 top-1/2 -translate-x-1/2 opacity-100 transition',
+                    isLoaded.value && 'opacity-0',
+                )}
+            >
+                <FireIcon className={'size-12 text-orange-700 animate-bounce'} />
+            </div>
         </div>
     );
 }

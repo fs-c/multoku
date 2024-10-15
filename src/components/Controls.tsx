@@ -43,7 +43,7 @@ export function Controls({
     fontSize,
     onAction,
 }: {
-    fontSize: ReadonlySignal<number>;
+    fontSize: ReadonlySignal<number | null>;
     onAction: (action: CellAction | GlobalAction) => void;
 }) {
     const mode = useSignal<'value' | 'note'>('value');

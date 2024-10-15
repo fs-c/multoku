@@ -3,13 +3,38 @@ import './index.css';
 import { Game } from './components/Game';
 import { render } from 'preact';
 import { Header } from './components/Header';
+import { useConnectedBoard } from './board/useConnectedBoard';
+import { useSignal, useComputed } from '@preact/signals';
+import { useMemo } from 'preact/hooks';
+import { ConnectivityBar } from './components/ConnectivityBar';
 
 export function App() {
+    const initialToken = useMemo(
+        () =>
+            Math.floor(Math.random() * Math.pow(10, 5))
+                .toString()
+                .padStart(5, '0'),
+        [],
+    );
+
+    const token = useSignal<string>(initialToken);
+    const connectionOptions = useComputed(() => ({
+        token: token.value,
+        shouldHost: token.value === initialToken,
+    }));
+
+    const { board, performBoardAction } = useConnectedBoard(
+        { difficulty: 'medium' },
+        connectionOptions.value,
+    );
+
     return (
-        <div className={'min-h-screen h-full flex flex-col items-center'}>
+        <div className={'flex h-full min-h-screen flex-col items-center'}>
             <Header />
 
-            <Game />
+            <Game board={board} performBoardAction={performBoardAction} />
+
+            <ConnectivityBar token={token} />
         </div>
     );
 }

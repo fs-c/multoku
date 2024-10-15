@@ -1,4 +1,3 @@
-import { ReadonlySignal } from '@preact/signals';
 import { ComponentChildren } from 'preact';
 import { twMerge } from 'tailwind-merge';
 import { possibleCellValues } from '../board/board';
@@ -35,7 +34,7 @@ export function Cell({
     onSelected,
 }: {
     cell: Cell;
-    fontSize: ReadonlySignal<number>;
+    fontSize: number;
     className?: string;
     selected: boolean;
     onSelected?: () => void;
@@ -64,7 +63,7 @@ export function Cell({
                     'absolute left-1/2 -translate-x-1/2',
                     cell.type === 'user' && (hasError ? 'text-red-700' : 'text-orange-700'),
                 )}
-                style={{ fontSize: `${fontSize.value}px` }}
+                style={{ fontSize: `${fontSize}px` }}
             >
                 {cell.value}
             </span>
@@ -75,7 +74,7 @@ export function Cell({
                     <span
                         key={noteValue}
                         className={'text-black/50 text-center'}
-                        style={{ fontSize: `${fontSize.value / 3}px` }}
+                        style={{ fontSize: `${fontSize / 3}px` }}
                     >
                         {notes.includes(noteValue) ? noteValue : ''}
                     </span>
