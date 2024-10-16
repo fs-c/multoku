@@ -58,14 +58,14 @@ export function Game({
     }
 
     return (
-        <div className={'relative flex-grow w-full'}>
+        <div className={'relative w-full flex-grow'}>
             <div
                 className={twMerge(
-                    'flex flex-col gap-8 w-full max-w-screen-md p-2 md:p-4 transition',
+                    'mx-auto flex w-full max-w-screen-md flex-col gap-8 p-2 transition md:p-4',
                     isLoaded.value ? 'opacity-100' : 'opacity-0',
                 )}
             >
-                <div className={'board grid grid-cols-9 select-none relative'}>
+                <div className={'board grid select-none grid-cols-9 grid-rows-9'}>
                     <div ref={referenceCellContainerRef}>
                         <Cell
                             cell={board.value[0]}
@@ -92,13 +92,14 @@ export function Game({
 
                 <Controls fontSize={cellFontSize} onAction={onAction} />
             </div>
+
             <div
                 className={twMerge(
-                    'flex justify-center items-center flex-grow absolute left-1/2 top-1/2 -translate-x-1/2 opacity-100 transition',
+                    'absolute left-1/2 top-1/2 flex flex-grow -translate-x-1/2 items-center justify-center opacity-100 transition',
                     isLoaded.value && 'opacity-0',
                 )}
             >
-                <FireIcon className={'size-12 text-orange-700 animate-bounce'} />
+                <FireIcon className={'size-12 animate-bounce text-orange-700'} />
             </div>
         </div>
     );

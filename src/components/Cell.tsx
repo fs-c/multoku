@@ -1,51 +1,36 @@
-import { ComponentChildren } from 'preact';
 import { twMerge } from 'tailwind-merge';
 import { possibleCellValues } from '../board/board';
 import type { Cell } from '../board/board';
 import { isFilledUserCell } from '../board/board';
 
-export function BaseCell({
-    children,
-    className = '',
-    onClick = () => {},
-}: {
-    children: ComponentChildren;
-    className?: string;
-    onClick?: () => void;
-}) {
-    return (
-        <div
-            className={twMerge(
-                'aspect-square flex justify-center items-center text-black/75 relative',
-                className,
-            )}
-            onClick={onClick}
-        >
-            {children}
-        </div>
-    );
-}
-
 export function Cell({
     cell,
     fontSize,
-    className,
     selected,
     onSelected,
 }: {
     cell: Cell;
     fontSize: number;
-    className?: string;
     selected: boolean;
-    onSelected?: () => void;
+    onSelected: () => void;
 }) {
     const notes = cell.type === 'given' || cell.value != null ? null : cell.notes;
 
     const hasError = isFilledUserCell(cell) && cell.error;
 
+    function internalOnSelected() {
+        // don't allow selecting (1) non-user cells and (2) user cells which were filled correctly
+        if (cell.type !== 'user' || (cell.value != null && !cell.error)) {
+            return;
+        }
+
+        onSelected();
+    }
+
     return (
-        <BaseCell
+        <button
             className={twMerge(
+                'relative flex aspect-square w-full items-center justify-center text-black/75',
                 selected
                     ? hasError
                         ? 'bg-red-500/30'
@@ -54,9 +39,8 @@ export function Cell({
                       ? 'bg-red-500/15'
                       : 'bg-white/25',
                 'grid grid-cols-3 grid-rows-3',
-                className,
             )}
-            onClick={onSelected}
+            onClick={internalOnSelected}
         >
             <span
                 className={twMerge(
@@ -73,12 +57,12 @@ export function Cell({
                 possibleCellValues.map((noteValue) => (
                     <span
                         key={noteValue}
-                        className={'text-black/50 text-center'}
+                        className={'text-center text-black/50'}
                         style={{ fontSize: `${fontSize / 3}px` }}
                     >
                         {notes.includes(noteValue) ? noteValue : ''}
                     </span>
                 ))}
-        </BaseCell>
+        </button>
     );
 }

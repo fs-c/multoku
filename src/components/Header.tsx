@@ -54,7 +54,7 @@ export function Header({ token }: { token: Signal<string> }) {
             <dialog
                 ref={connectionDialogRef}
                 className={
-                    'absolute left-0 top-16 m-0 mx-auto w-full rounded-lg bg-orange-100 p-4 text-black/75 backdrop:backdrop-blur-sm'
+                    'absolute left-0 top-16 m-0 mx-auto w-full max-w-screen-sm rounded-lg bg-orange-100 p-4 text-black/75 backdrop:backdrop-blur-sm'
                 }
             >
                 <form className={'flex flex-col gap-2'}>
@@ -80,7 +80,7 @@ export function Header({ token }: { token: Signal<string> }) {
                     <button
                         autofocus
                         className={
-                            'w-full self-center rounded-md bg-orange-300 px-3 py-1 text-orange-900'
+                            'w-full self-center rounded-md border-0 bg-orange-300 px-3 py-1 text-orange-900'
                         }
                         onClick={onConnect}
                     >
@@ -89,7 +89,7 @@ export function Header({ token }: { token: Signal<string> }) {
 
                     <button
                         className={
-                            'w-full self-center rounded-md border bg-orange-200 px-3 py-1 text-orange-900'
+                            'w-full self-center rounded-md bg-orange-200 px-3 py-1 text-orange-900'
                         }
                         onClick={closeConnectionDialog}
                     >
