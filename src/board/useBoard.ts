@@ -11,8 +11,9 @@ export type InitialBoardCreationOptions = {
 
 export function useBoard(initialBoardCreationOptions: InitialBoardCreationOptions): {
     board: ReadonlySignal<Board | null>;
+    solution: ReadonlySignal<Board | null>;
     performBoardAction: (action: BoardAction) => void;
-    setBoard: (board: Board) => void;
+    setBoardAndSolution: (board: Board, solution: Board) => void;
 } {
     const board = useSignal<Board | null>(null);
     const solution = useSignal<Board | null>(null);
@@ -88,9 +89,10 @@ export function useBoard(initialBoardCreationOptions: InitialBoardCreationOption
         });
     }
 
-    function setBoard(newBoard: Board): void {
+    function setBoardAndSolution(newBoard: Board, newSolution: Board): void {
         board.value = newBoard;
+        solution.value = newSolution;
     }
 
-    return { board, performBoardAction, setBoard };
+    return { board, solution, performBoardAction, setBoardAndSolution };
 }

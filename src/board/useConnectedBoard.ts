@@ -14,6 +14,7 @@ type ConnectionEvent =
     | {
           type: 'initial-board';
           board: Board;
+          solution: Board;
       }
     | {
           type: 'action';
@@ -66,7 +67,11 @@ function setupPeerDebugLogs(peer: Peer, tag: string) {
     });
 }
 
-function setupEventDistributor(token: string, board: ReadonlySignal<Board | null>) {
+function setupEventDistributor(
+    token: string,
+    board: ReadonlySignal<Board | null>,
+    solution: ReadonlySignal<Board | null>,
+) {
     const distributorPeerId = connectionTokenToDistributorId(token);
     const distributor = new Peer(distributorPeerId, commonPeerOptions);
 
@@ -88,8 +93,11 @@ function setupEventDistributor(token: string, board: ReadonlySignal<Board | null
         connection.on('open', () => {
             connectionsToDistributor.set(connection.peer, connection);
 
-            if (board.value != null) {
-                sendEvent({ type: 'initial-board', board: board.value }, connection);
+            if (board.value != null && solution.value != null) {
+                sendEvent(
+                    { type: 'initial-board', board: board.value, solution: solution.value },
+                    connection,
+                );
             } else {
                 console.error('board not initialized on connection open');
             }
@@ -110,7 +118,7 @@ function setupEventDistributor(token: string, board: ReadonlySignal<Board | null
 function useConnectionToDistributor(
     token: string,
     performBoardAction: (action: BoardAction) => void,
-    setBoard: (board: Board) => void,
+    setBoardAndSolution: (board: Board, solution: Board) => void,
 ) {
     const connectionToDistributor = useSignal<DataConnection | null>(null);
 
@@ -127,7 +135,7 @@ function useConnectionToDistributor(
 
                 switch (event.type) {
                     case 'initial-board': {
-                        setBoard(event.board);
+                        setBoardAndSolution(event.board, event.solution);
                         break;
                     }
                     case 'action': {
@@ -163,11 +171,13 @@ export function useConnectedBoard(
     initialBoardCreationOptions: InitialBoardCreationOptions,
     connectionOptions: ConnectionOptions,
 ) {
-    const { board, performBoardAction, setBoard } = useBoard(initialBoardCreationOptions);
+    const { board, solution, performBoardAction, setBoardAndSolution } = useBoard(
+        initialBoardCreationOptions,
+    );
 
     useEffect(() => {
         if (connectionOptions.shouldHost) {
-            return setupEventDistributor(connectionOptions.token, board);
+            return setupEventDistributor(connectionOptions.token, board, solution);
         }
 
         return () => {};
@@ -176,7 +186,7 @@ export function useConnectedBoard(
     const { sendEvent } = useConnectionToDistributor(
         connectionOptions.token,
         performBoardAction,
-        setBoard,
+        setBoardAndSolution,
     );
 
     function sendBoardAction(action: BoardAction) {
