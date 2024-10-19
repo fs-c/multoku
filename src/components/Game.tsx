@@ -96,7 +96,7 @@ export function Game({
             <div
                 className={twMerge(
                     'absolute left-1/2 top-1/2 flex flex-grow -translate-x-1/2 items-center justify-center opacity-100 transition',
-                    isLoaded.value && 'opacity-0',
+                    isLoaded.value && '-z-10 opacity-0',
                 )}
             >
                 <FireIcon className={'size-12 animate-bounce text-orange-700'} />

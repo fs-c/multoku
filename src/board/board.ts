@@ -1,3 +1,5 @@
+import { User } from './useConnectedBoard';
+
 export const possibleCellValues = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 export type CellValue = (typeof possibleCellValues)[number];
@@ -7,7 +9,7 @@ export function isPossibleCellValue(value: number): value is CellValue {
 }
 
 export type GivenCell = { type: 'given'; value: CellValue };
-export type FilledUserCell = { type: 'user'; value: CellValue; error: boolean };
+export type FilledUserCell = { type: 'user'; value: CellValue; error: boolean; user: User };
 export type EmptyUserCell = { type: 'user'; value: null; notes: CellValue[] };
 
 export function isFilledUserCell(cell: Cell): cell is FilledUserCell {

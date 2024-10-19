@@ -60,9 +60,14 @@ export function useBoard(initialBoardCreationOptions: InitialBoardCreationOption
                         return board.value;
                     }
 
-                    selectedCell.value = action.value;
-                    (selectedCell as FilledUserCell).error =
-                        solution.value?.[action.selectedCellIndex].value !== action.value;
+                    const newCell: FilledUserCell = {
+                        ...selectedCell,
+                        value: action.value,
+                        error: solution.value?.[action.selectedCellIndex].value !== action.value,
+                        user: action.user,
+                    };
+
+                    newBoard[action.selectedCellIndex] = newCell;
                     break;
                 }
                 case 'note': {

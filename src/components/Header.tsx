@@ -54,10 +54,10 @@ export function Header({ token }: { token: Signal<string> }) {
             <dialog
                 ref={connectionDialogRef}
                 className={
-                    'absolute left-0 top-16 m-0 mx-auto w-full max-w-screen-sm rounded-lg bg-orange-100 p-4 text-black/75 backdrop:backdrop-blur-sm'
+                    'absolute left-0 top-16 m-0 mx-auto w-full max-w-screen-sm bg-transparent p-4 backdrop:backdrop-blur-sm'
                 }
             >
-                <form className={'flex flex-col gap-2'}>
+                <form className={'flex flex-col gap-2 rounded-lg bg-orange-100 p-4 text-black/75'}>
                     <p>
                         <span className={'font-semibold text-orange-800'}>
                             Share the session code
@@ -70,7 +70,7 @@ export function Header({ token }: { token: Signal<string> }) {
                     <label className={'block'}>
                         <input
                             className={
-                                'mt-1 w-full rounded-md border border-orange-300 bg-orange-100 px-2 py-1'
+                                'mt-1 w-full rounded-md border border-black/50 bg-orange-100 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-300'
                             }
                             value={token}
                             onInput={(e) => (newToken.value = e.currentTarget.value)}

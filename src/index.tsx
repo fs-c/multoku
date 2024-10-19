@@ -6,7 +6,6 @@ import { Header } from './components/Header';
 import { useConnectedBoard } from './board/useConnectedBoard';
 import { useSignal, useComputed } from '@preact/signals';
 import { useMemo } from 'preact/hooks';
-import { ConnectivityBar } from './components/ConnectivityBar';
 
 export function App() {
     const initialToken = useMemo(
@@ -23,7 +22,7 @@ export function App() {
         shouldHost: token.value === initialToken,
     }));
 
-    const { board, performBoardAction } = useConnectedBoard(
+    const { board, sendBoardAction } = useConnectedBoard(
         { difficulty: 'medium' },
         connectionOptions.value,
     );
@@ -32,7 +31,7 @@ export function App() {
         <div className={'relative flex h-full min-h-screen flex-col items-center'}>
             <Header token={token} />
 
-            <Game board={board} performBoardAction={performBoardAction} />
+            <Game board={board} performBoardAction={sendBoardAction} />
         </div>
     );
 }
