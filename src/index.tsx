@@ -22,7 +22,7 @@ export function App() {
         shouldHost: token.value === initialToken,
     }));
 
-    const { board, sendBoardAction } = useConnectedBoard(
+    const { board, sendBoardAction, users } = useConnectedBoard(
         { difficulty: 'medium' },
         connectionOptions.value,
     );

@@ -1,4 +1,5 @@
 import { CellValue } from './board';
+import { User } from './useConnectedBoard';
 
 export type GlobalAction = { type: 'undo' };
 
@@ -12,3 +13,5 @@ export type CellAction =
       };
 
 export type BoardAction = (CellAction & { selectedCellIndex: number }) | GlobalAction;
+
+export type ConnectedBoardAction = BoardAction & { user: User };

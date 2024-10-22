@@ -1,7 +1,7 @@
 import { ReadonlySignal, useSignal } from '@preact/signals';
 import { produce } from 'immer';
 import { useEffect } from 'preact/hooks';
-import { BoardAction } from './action';
+import { ConnectedBoardAction } from './action';
 import { Board, FilledUserCell } from './board';
 import { Difficulty, generateBoardAndSolution } from './generate';
 
@@ -12,7 +12,7 @@ export type InitialBoardCreationOptions = {
 export function useBoard(initialBoardCreationOptions: InitialBoardCreationOptions): {
     board: ReadonlySignal<Board | null>;
     solution: ReadonlySignal<Board | null>;
-    performBoardAction: (action: BoardAction) => void;
+    performBoardAction: (action: ConnectedBoardAction) => void;
     setBoardAndSolution: (board: Board, solution: Board) => void;
 } {
     const board = useSignal<Board | null>(null);
@@ -27,7 +27,7 @@ export function useBoard(initialBoardCreationOptions: InitialBoardCreationOption
         );
     }, []);
 
-    function performBoardAction(action: BoardAction): void {
+    function performBoardAction(action: ConnectedBoardAction): void {
         board.value = produce(board.value, (newBoard) => {
             if (newBoard == null) {
                 console.warn('board not initialized');

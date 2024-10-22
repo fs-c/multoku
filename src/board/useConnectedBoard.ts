@@ -12,9 +12,10 @@ type ConnectionOptions = {
 
 type ConnectionEvent =
     | {
-          type: 'initial-board';
+          type: 'initial-state';
           board: Board;
           solution: Board;
+          users: User[];
       }
     | {
           type: 'action';
@@ -87,6 +88,8 @@ function setupEventDistributor(
     const distributorPeerId = connectionTokenToDistributorId(token);
     const distributor = new Peer(distributorPeerId, commonPeerOptions);
 
+    const users = useSignal<User[]>([]);
+
     setupPeerDebugLogs(distributor, '[distributor]');
 
     const connectionsToDistributor = new Map<string, DataConnection>();
@@ -111,15 +114,23 @@ function setupEventDistributor(
         connection.on('open', () => {
             connectionsToDistributor.set(connection.peer, connection);
 
+            const newUser = { id: connection.peer, color: userColors[users.value.length] };
+            users.value = [...users.value, newUser];
+
             if (board.value != null && solution.value != null) {
                 sendEvent(
-                    { type: 'initial-board', board: board.value, solution: solution.value },
+                    {
+                        type: 'initial-state',
+                        board: board.value,
+                        solution: solution.value,
+                        users: users.value,
+                    },
                     connection,
                 );
 
                 broadcastEvent({
                     type: 'user-join',
-                    user: { id: connection.peer, color: userColors[connectionsToDistributor.size] },
+                    user: newUser,
                 });
             } else {
                 console.error('board not initialized on connection open');
@@ -140,9 +151,11 @@ function setupEventDistributor(
 
 function useConnectionToDistributor(token: string, onEvent: (event: ConnectionEvent) => void) {
     const connectionToDistributor = useSignal<DataConnection | null>(null);
+    const ownPeerId = useSignal<string | null>(null);
 
     useEffect(() => {
         const peer = new Peer(commonPeerOptions);
+        ownPeerId.value = peer.id;
 
         setupPeerDebugLogs(peer, '[client]');
 
@@ -174,7 +187,7 @@ function useConnectionToDistributor(token: string, onEvent: (event: ConnectionEv
         connectionToDistributor.value.send(JSON.stringify(event));
     }
 
-    return { sendEvent };
+    return { sendEvent, ownPeerId };
 }
 
 export function useConnectedBoard(
@@ -193,23 +206,42 @@ export function useConnectedBoard(
         return () => {};
     }, [connectionOptions]);
 
+    const users = useSignal<Map<string, User>>(new Map());
+
+    const { sendEvent, ownPeerId: ownUserId } = useConnectionToDistributor(
+        connectionOptions.token,
+        onEvent,
+    );
+
     function onEvent(event: ConnectionEvent) {
         switch (event.type) {
-            case 'initial-board':
+            case 'initial-state':
                 setBoardAndSolution(event.board, event.solution);
+                users.value = new Map(event.users.map((user) => [user.id, user]));
                 break;
 
             case 'action':
-                performBoardAction(event.action);
+                if (ownUserId.value == null) {
+                    throw new Error('got action event without user id being set');
+                }
+
+                const user = users.value.get(ownUserId.value);
+                if (user == null) {
+                    throw new Error(`no user found for id ${ownUserId.value}`);
+                }
+
+                performBoardAction({ ...event.action, user });
+                break;
+
+            case 'user-join':
+                users.value.set(event.user.id, event.user);
                 break;
         }
     }
-
-    const { sendEvent } = useConnectionToDistributor(connectionOptions.token, onEvent);
 
     function sendBoardAction(action: BoardAction) {
         sendEvent({ type: 'action', action });
     }
 
-    return { board, sendBoardAction };
+    return { board, sendBoardAction, users };
 }
