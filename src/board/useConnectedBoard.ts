@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks';
 import { InitialBoardCreationOptions, useBoard } from './useBoard';
 import Peer, { DataConnection, PeerOptions } from 'peerjs';
 import { Board } from './board';
-import { BoardAction } from './action';
+import { BoardAction, ConnectedBoardAction } from './action';
 import { ReadonlySignal, useSignal } from '@preact/signals';
 
 type ConnectionOptions = {
@@ -19,7 +19,7 @@ type ConnectionEvent =
       }
     | {
           type: 'action';
-          action: BoardAction;
+          action: ConnectedBoardAction;
       }
     | {
           type: 'user-join';
@@ -35,7 +35,6 @@ export type User = {
 };
 
 const commonPeerOptions: PeerOptions = {
-    debug: 3,
     config: {
         iceServers: [
             { urls: 'stun:freestun.net:3478' },
@@ -80,73 +79,78 @@ function setupPeerDebugLogs(peer: Peer, tag: string) {
     });
 }
 
-function setupEventDistributor(
+function useSetupEventDistributor(
+    enabled: boolean,
     token: string,
     board: ReadonlySignal<Board | null>,
     solution: ReadonlySignal<Board | null>,
+    users: ReadonlySignal<Map<string, User>>,
 ) {
-    const distributorPeerId = connectionTokenToDistributorId(token);
-    const distributor = new Peer(distributorPeerId, commonPeerOptions);
-
-    const users = useSignal<User[]>([]);
-
-    setupPeerDebugLogs(distributor, '[distributor]');
-
-    const connectionsToDistributor = new Map<string, DataConnection>();
-
-    function sendEvent(event: ConnectionEvent, connection: DataConnection) {
-        connection.send(JSON.stringify(event));
+    if (!enabled) {
+        return;
     }
 
-    function broadcastEvent(event: ConnectionEvent) {
-        for (const connection of connectionsToDistributor.values()) {
-            sendEvent(event, connection);
+    useEffect(() => {
+        const distributorPeerId = connectionTokenToDistributorId(token);
+        const distributor = new Peer(distributorPeerId, commonPeerOptions);
+
+        setupPeerDebugLogs(distributor, '[distributor]');
+
+        const connectionsToDistributor = new Map<string, DataConnection>();
+
+        function sendEvent(event: ConnectionEvent, connection: DataConnection) {
+            connection.send(JSON.stringify(event));
         }
-    }
 
-    function broadcastData(data: unknown) {
-        for (const connection of connectionsToDistributor.values()) {
-            connection.send(data);
-        }
-    }
-
-    distributor.on('connection', (connection: DataConnection) => {
-        connection.on('open', () => {
-            connectionsToDistributor.set(connection.peer, connection);
-
-            const newUser = { id: connection.peer, color: userColors[users.value.length] };
-            users.value = [...users.value, newUser];
-
-            if (board.value != null && solution.value != null) {
-                sendEvent(
-                    {
-                        type: 'initial-state',
-                        board: board.value,
-                        solution: solution.value,
-                        users: users.value,
-                    },
-                    connection,
-                );
-
-                broadcastEvent({
-                    type: 'user-join',
-                    user: newUser,
-                });
-            } else {
-                console.error('board not initialized on connection open');
+        function broadcastEvent(event: ConnectionEvent) {
+            for (const connection of connectionsToDistributor.values()) {
+                sendEvent(event, connection);
             }
+        }
+
+        function broadcastData(data: unknown) {
+            for (const connection of connectionsToDistributor.values()) {
+                connection.send(data);
+            }
+        }
+
+        distributor.on('connection', (connection: DataConnection) => {
+            connection.on('open', () => {
+                connectionsToDistributor.set(connection.peer, connection);
+
+                const newUser = { id: connection.peer, color: userColors[users.value.size] };
+
+                if (board.value != null && solution.value != null) {
+                    sendEvent(
+                        {
+                            type: 'initial-state',
+                            board: board.value,
+                            solution: solution.value,
+                            users: Object.values(users.value),
+                        },
+                        connection,
+                    );
+
+                    broadcastEvent({
+                        type: 'user-join',
+                        user: newUser,
+                    });
+                } else {
+                    console.error('board not initialized on connection open');
+                }
+            });
+
+            connection.on('data', (data) => {
+                broadcastData(data);
+            });
         });
 
-        connection.on('data', (data) => {
-            broadcastData(data);
-        });
+        return () => {
+            console.log('[distributor] destroying');
+
+            distributor.destroy();
+        };
     });
-
-    return () => {
-        console.log('[distributor] destroying');
-
-        distributor.destroy();
-    };
 }
 
 function useConnectionToDistributor(token: string, onEvent: (event: ConnectionEvent) => void) {
@@ -155,12 +159,12 @@ function useConnectionToDistributor(token: string, onEvent: (event: ConnectionEv
 
     useEffect(() => {
         const peer = new Peer(commonPeerOptions);
-        ownPeerId.value = peer.id;
 
         setupPeerDebugLogs(peer, '[client]');
 
         peer.on('open', () => {
             connectionToDistributor.value = peer.connect(connectionTokenToDistributorId(token));
+            ownPeerId.value = peer.id;
 
             connectionToDistributor.value.on('data', (data) => {
                 const event = JSON.parse(data as string) as ConnectionEvent;
@@ -198,15 +202,15 @@ export function useConnectedBoard(
         initialBoardCreationOptions,
     );
 
-    useEffect(() => {
-        if (connectionOptions.shouldHost) {
-            return setupEventDistributor(connectionOptions.token, board, solution);
-        }
-
-        return () => {};
-    }, [connectionOptions]);
-
     const users = useSignal<Map<string, User>>(new Map());
+
+    useSetupEventDistributor(
+        connectionOptions.shouldHost,
+        connectionOptions.token,
+        board,
+        solution,
+        users,
+    );
 
     const { sendEvent, ownPeerId: ownUserId } = useConnectionToDistributor(
         connectionOptions.token,
@@ -221,16 +225,7 @@ export function useConnectedBoard(
                 break;
 
             case 'action':
-                if (ownUserId.value == null) {
-                    throw new Error('got action event without user id being set');
-                }
-
-                const user = users.value.get(ownUserId.value);
-                if (user == null) {
-                    throw new Error(`no user found for id ${ownUserId.value}`);
-                }
-
-                performBoardAction({ ...event.action, user });
+                performBoardAction(event.action);
                 break;
 
             case 'user-join':
@@ -240,7 +235,16 @@ export function useConnectedBoard(
     }
 
     function sendBoardAction(action: BoardAction) {
-        sendEvent({ type: 'action', action });
+        if (ownUserId.value == null) {
+            throw new Error('got action event without user id being set');
+        }
+
+        const user = users.value.get(ownUserId.value);
+        if (user == null) {
+            throw new Error(`no user found for id ${ownUserId.value}`);
+        }
+
+        sendEvent({ type: 'action', action: { ...action, user } });
     }
 
     return { board, sendBoardAction, users };

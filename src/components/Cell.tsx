@@ -4,6 +4,7 @@ import type { Cell } from '../board/board';
 import { isFilledUserCell } from '../board/board';
 import { UserColor } from '../board/useConnectedBoard';
 
+// it's important to have the full class names here, otherwise tailwind will not generate them
 function userColorToTailwindClass(color: UserColor): string {
     switch (color) {
         case 'orange':
@@ -61,7 +62,7 @@ export function Cell({
             <span
                 className={twMerge(
                     'absolute left-1/2 -translate-x-1/2',
-                    cell.type === 'user' && userColorToTailwindClass(cell.user.color),
+                    isFilledUserCell(cell) && userColorToTailwindClass(cell.user.color),
                 )}
                 style={{ fontSize: `${fontSize}px` }}
             >
